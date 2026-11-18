@@ -1,0 +1,29 @@
+{% extends "base.html" %}
+{% block title %}Entrar | sapoupei{% endblock %}
+{% block content %}
+<section class="auth-layout login-layout">
+  <div class="auth-intro">
+    <p class="eyebrow">EDUCAÇÃO FINANCEIRA • CONTROLE • PLANEJAMENTO</p>
+    <h1>Organize hoje.<br><em>Planeje seu amanhã.</em></h1>
+    <p>Um espaço simples para acompanhar sua vida financeira com mais intenção.</p>
+  </div>
+  <div class="form-panel">
+    <p class="eyebrow">BEM-VINDO DE VOLTA</p>
+    <h2>Acesse sua conta</h2>
+    <form method="post" novalidate>
+      {{ form.hidden_tag() }}
+      {% for field in [form.email, form.password] %}
+        <div class="field">
+          {{ field.label }}
+          {{ field(class_="input", autocomplete="email" if field.name == "email" else "current-password") }}
+          {% for error in field.errors %}<small class="field-error">{{ error }}</small>{% endfor %}
+        </div>
+      {% endfor %}
+      <p class="password-recovery-link"><a href="{{ url_for('auth.esqueci_senha') }}">Esqueceu sua senha?</a></p>
+      <label class="consent-row">{{ form.remember() }} <span>{{ form.remember.label.text }}</span></label>
+      <button class="primary-button" type="submit">Entrar <span aria-hidden="true">&#8594;</span></button>
+    </form>
+    <p class="form-footer">Ainda não tem conta? <a href="{{ url_for('auth.cadastro') }}">Cadastre-se</a></p>
+  </div>
+</section>
+{% endblock %}

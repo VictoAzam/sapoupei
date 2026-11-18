@@ -1,0 +1,15 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 768 768">
+  <defs>
+    <mask id="lens-cutouts">
+      <rect width="768" height="768" fill="#fff"/>
+      <ellipse cx="226" cy="343" rx="99" ry="109" fill="#000"/>
+      <ellipse cx="542" cy="343" rx="99" ry="109" fill="#000"/>
+    </mask>
+  </defs>
+  <g fill="#00bf66" mask="url(#lens-cutouts)">
+    <circle cx="226" cy="347" r="143"/>
+    <circle cx="542" cy="347" r="143"/>
+    <rect x="347" y="324" width="74" height="49"/>
+    <path d="M98 405c-25 34-24 83-8 112 6 10 13 19 22 26 35 6 44 22 77 22 40 0 52-22 98-22s58 22 97 22 52-22 98-22 58 22 98 22c33 0 42-16 77-22 9-7 16-16 22-26 16-29 17-78-8-112-23 27-51 39-82 39H180c-31 0-59-12-82-39z"/>
+  </g>
+</svg>

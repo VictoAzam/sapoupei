@@ -1,0 +1,17 @@
+{% extends "base.html" %}
+{% block title %}Dicas financeiras | sapoupei{% endblock %}
+{% block content %}
+<section class="dashboard-heading">
+  <div><p class="eyebrow">EDUCAÇÃO FINANCEIRA</p><h1>Dicas para o seu momento</h1><p>Conteúdo educativo, sem julgamentos ou fórmulas únicas.</p></div>
+</section>
+<section class="profile-strip tip-recommendation">
+  <div><p class="eyebrow">SUGESTÃO A PARTIR DOS SEUS REGISTROS</p><h2>{{ profile_type }}</h2><p>{{ recommendation }}</p></div>
+</section>
+<section class="tip-grid">
+  {% for tip in tips %}
+    <article class="tip-item"><span class="tip-index">{{ "%02d"|format(loop.index) }}</span><div><h2>{{ tip.title }}</h2><p>{{ tip.content }}</p></div></article>
+  {% else %}
+    <div class="empty-state"><h2>Dicas em preparação</h2><p>As recomendações educativas aparecerão aqui.</p></div>
+  {% endfor %}
+</section>
+{% endblock %}

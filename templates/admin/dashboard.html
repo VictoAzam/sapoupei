@@ -1,0 +1,78 @@
+{% extends "base.html" %}
+{% block title %}Administração | sapoupei{% endblock %}
+{% block content %}
+<section class="dashboard-heading admin-heading">
+  <div>
+    <p class="eyebrow">ÁREA ADMINISTRATIVA</p>
+    <h1>Análise geral</h1>
+    <p>Indicadores consolidados dos hábitos financeiros.</p>
+  </div>
+  <a class="secondary-button" href="{{ url_for('admin.export_report') }}">Baixar relatório CSV <span aria-hidden="true">&#8595;</span></a>
+</section>
+
+<section class="summary-grid admin-summary-grid" aria-label="Indicadores gerais">
+  <article class="summary-item"><span>Usuários cadastrados</span><strong>{{ report.total_users }}</strong><small>Contas no sistema</small></article>
+  <article class="summary-item"><span>Receita média por usuário</span><strong>R$ {{ "%.2f"|format(report.avg_income) }}</strong><small>Acumulado registrado</small></article>
+  <article class="summary-item"><span>Despesa média por usuário</span><strong>R$ {{ "%.2f"|format(report.avg_expense) }}</strong><small>Acumulado registrado</small></article>
+  <article class="summary-item"><span>Média mensal de despesas</span><strong>R$ {{ "%.2f"|format(report.avg_monthly_expense) }}</strong><small>Total geral / 6 meses</small></article>
+  <article class="summary-item"><span>Usuários com saldo positivo</span><strong>{{ "%.1f"|format(report.saving_percent) }}%</strong><small>Receitas maiores que despesas</small></article>
+  <article class="summary-item summary-balance"><span>Saldo agregado</span><strong>R$ {{ "%.2f"|format(report.income_total - report.expense_total) }}</strong><small>Receitas menos despesas</small></article>
+</section>
+
+<section class="admin-chart-grid" aria-label="Gráficos de análise">
+  <article class="chart-panel">
+    <div class="chart-heading"><p class="eyebrow">PÚBLICO</p><h2>Usuários por faixa etária</h2></div>
+    <div class="chart-area"><canvas id="age-chart" aria-label="Distribuição de usuários por faixa etária"></canvas></div>
+  </article>
+  <article class="chart-panel">
+    <div class="chart-heading"><p class="eyebrow">FAIXA ETÁRIA</p><h2>Despesa média por usuário</h2></div>
+    <div class="chart-area"><canvas id="age-expense-chart" aria-label="Despesa média por usuário em cada faixa etária"></canvas></div>
+  </article>
+  <article class="chart-panel">
+    <div class="chart-heading"><p class="eyebrow">DESPESAS</p><h2>Gastos por categoria</h2></div>
+    <div class="chart-area"><canvas id="category-chart" aria-label="Total de despesas por categoria"></canvas></div>
+    <div class="frequency-summary"><span class="eyebrow">LANÇAMENTOS POR CATEGORIA</span>
+      {% for category, count in report.category_frequency_rows %}<div><span>{{ category }}</span><strong>{{ count }}</strong></div>{% else %}<p>Sem despesas categorizadas.</p>{% endfor %}
+    </div>
+  </article>
+  <article class="chart-panel">
+    <div class="chart-heading"><p class="eyebrow">COMPORTAMENTO</p><h2>Perfis financeiros</h2></div>
+    <div class="chart-area"><canvas id="profile-chart" aria-label="Distribuição dos perfis financeiros"></canvas></div>
+  </article>
+  <article class="chart-panel chart-panel-wide">
+    <div class="chart-heading"><p class="eyebrow">EVOLUÇÃO</p><h2>Receitas e despesas mensais</h2></div>
+    <div class="chart-area chart-area-wide"><canvas id="monthly-chart" aria-label="Comparação mensal entre receitas e despesas"></canvas></div>
+  </article>
+</section>
+<p class="privacy-note">Relatórios agregados, sem nomes, e-mails ou movimentações individuais.</p>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.7/dist/chart.umd.min.js"></script>
+<script>
+  const chartColors = ['#176b54', '#d2774f', '#4b8290', '#d4a833', '#8e6e9e', '#5a9a70'];
+  const makeDonut = (element, labels, values) => new Chart(document.getElementById(element), {
+    type: 'doughnut',
+    data: { labels, datasets: [{ data: values, backgroundColor: chartColors, borderWidth: 0, hoverOffset: 5 }] },
+    options: { maintainAspectRatio: false, plugins: { legend: { position: 'bottom', labels: { usePointStyle: true, padding: 18 } } } }
+  });
+  makeDonut('age-chart', {{ report.age_labels|tojson }}, {{ report.age_values|tojson }});
+  makeDonut('profile-chart', {{ report.profile_labels|tojson }}, {{ report.profile_values|tojson }});
+  new Chart(document.getElementById('age-expense-chart'), {
+    type: 'bar',
+    data: { labels: {{ report.age_expense_labels|tojson }}, datasets: [{ label: 'Média de despesas (R$)', data: {{ report.age_expense_values|tojson }}, backgroundColor: '#4b8290', borderRadius: 3 }] },
+    options: { maintainAspectRatio: false, scales: { y: { beginAtZero: true, grid: { color: '#edf0ed' } }, x: { grid: { display: false } } }, plugins: { legend: { display: false } } }
+  });
+  new Chart(document.getElementById('category-chart'), {
+    type: 'bar',
+    data: { labels: {{ report.category_labels|tojson }}, datasets: [{ label: 'Despesas (R$)', data: {{ report.category_values|tojson }}, backgroundColor: '#d2774f', borderRadius: 3 }] },
+    options: { indexAxis: 'y', maintainAspectRatio: false, scales: { x: { beginAtZero: true, grid: { color: '#edf0ed' } }, y: { grid: { display: false } } }, plugins: { legend: { display: false } } }
+  });
+  new Chart(document.getElementById('monthly-chart'), {
+    type: 'line',
+    data: { labels: {{ report.month_labels|tojson }}, datasets: [
+      { label: 'Receitas', data: {{ report.month_income|tojson }}, borderColor: '#176b54', backgroundColor: '#176b54', tension: .3 },
+      { label: 'Despesas', data: {{ report.month_expense|tojson }}, borderColor: '#d2774f', backgroundColor: '#d2774f', tension: .3 }
+    ] },
+    options: { maintainAspectRatio: false, scales: { y: { beginAtZero: true, grid: { color: '#edf0ed' } }, x: { grid: { display: false } } } }
+  });
+</script>
+{% endblock %}

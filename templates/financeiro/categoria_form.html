@@ -1,0 +1,23 @@
+{% extends "base.html" %}
+{% block title %}Nova categoria | sapoupei{% endblock %}
+{% block content %}
+<section class="form-page-heading">
+  <a class="back-link" href="{{ url_for('financeiro.lista_movimentacoes') }}">&#8592; Voltar às movimentações</a>
+  <p class="eyebrow">PERSONALIZAÇÃO</p>
+  <h1>Nova categoria</h1>
+</section>
+<section class="form-panel movement-form-panel">
+  <form method="post" novalidate>
+    {{ form.hidden_tag() }}
+    {% for field in [form.name, form.kind] %}
+      <div class="field">
+        {{ field.label }}
+        {{ field(class_="input") }}
+        {% for error in field.errors %}<small class="field-error">{{ error }}</small>{% endfor %}
+      </div>
+    {% endfor %}
+    <p class="field-hint">Categorias pessoais ficam disponíveis apenas na sua conta. Categorias globais continuam visíveis para todos.</p>
+    <button class="primary-button" type="submit">Criar categoria <span aria-hidden="true">&#8594;</span></button>
+  </form>
+</section>
+{% endblock %}

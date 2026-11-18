@@ -1,0 +1,19 @@
+{% extends "base.html" %}
+{% block title %}{{ page_title }} | sapoupei{% endblock %}
+{% block content %}
+<section class="form-page-heading"><a class="back-link" href="{{ url_for('financeiro.lista_movimentacoes') }}">&#8592; Voltar às movimentações</a><p class="eyebrow">CONTROLE FINANCEIRO</p><h1>{{ page_title }}</h1></section>
+<section class="form-panel movement-form-panel">
+  <form method="post" novalidate>
+    {{ form.hidden_tag() }}
+    {% for field in [form.kind, form.description, form.amount, form.occurred_on, form.category_id] %}
+      <div class="field">
+        {{ field.label }}
+        {{ field(class_="input") }}
+        {% for error in field.errors %}<small class="field-error">{{ error }}</small>{% endfor %}
+      </div>
+    {% endfor %}
+    <p class="field-hint"><a href="{{ url_for('financeiro.nova_categoria') }}">＋ Criar uma categoria pessoal</a></p>
+    <button class="primary-button" type="submit">Salvar movimentação <span aria-hidden="true">&#8594;</span></button>
+  </form>
+</section>
+{% endblock %}

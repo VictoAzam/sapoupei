@@ -1,0 +1,25 @@
+{% extends "base.html" %}
+{% block title %}Recuperar senha | sapoupei{% endblock %}
+{% block content %}
+<section class="auth-layout">
+  <div class="auth-intro">
+    <p class="eyebrow">ACESSO À SUA CONTA</p>
+    <h1>Vamos recuperar <em>sua senha.</em></h1>
+    <p>Informe o e-mail usado no cadastro para receber um link seguro de redefinição.</p>
+  </div>
+  <div class="form-panel">
+    <p class="eyebrow">RECUPERAÇÃO DE ACESSO</p>
+    <h2>Esqueceu sua senha?</h2>
+    <form method="post" novalidate>
+      {{ form.hidden_tag() }}
+      <div class="field">
+        {{ form.email.label }}
+        {{ form.email(class_="input", autocomplete="email", inputmode="email") }}
+        {% for error in form.email.errors %}<small class="field-error">{{ error }}</small>{% endfor %}
+      </div>
+      <button class="primary-button" type="submit">Enviar link <span aria-hidden="true">&#8594;</span></button>
+    </form>
+    <p class="form-footer"><a href="{{ url_for('auth.login') }}">Voltar para o login</a></p>
+  </div>
+</section>
+{% endblock %}

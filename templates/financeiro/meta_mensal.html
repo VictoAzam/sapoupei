@@ -1,0 +1,21 @@
+{% extends "base.html" %}
+{% block title %}Meta mensal | sapoupei{% endblock %}
+{% block content %}
+<section class="form-page-heading">
+  <a class="back-link" href="{{ url_for('painel') }}">&#8592; Voltar ao painel</a>
+  <p class="eyebrow">PLANEJAMENTO</p>
+  <h1>Meta de gastos mensais</h1>
+</section>
+<section class="form-panel movement-form-panel">
+  <form method="post" novalidate>
+    {{ form.hidden_tag() }}
+    <div class="field">
+      {{ form.monthly_limit.label }}
+      {{ form.monthly_limit(class_="input") }}
+      {% for error in form.monthly_limit.errors %}<small class="field-error">{{ error }}</small>{% endfor %}
+      <small class="field-hint">A meta é opcional. Deixe em branco para removê-la.</small>
+    </div>
+    <button class="primary-button" type="submit">Salvar meta <span aria-hidden="true">&#8594;</span></button>
+  </form>
+</section>
+{% endblock %}
