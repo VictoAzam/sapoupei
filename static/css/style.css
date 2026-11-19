@@ -368,3 +368,9 @@ a:hover { color: var(--bs-link-hover-color); }
 @media (max-width: 760px) {
   .page-shell { padding-top: 28px; }
 }
+
+html {
+  visibility: visible;
+  opacity: 1;
+  transition: opacity 0.15s ease-in;
+}
