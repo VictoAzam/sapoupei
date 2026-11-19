@@ -1,29 +1,31 @@
 {% extends "base.html" %}
 {% block title %}Criar conta | sapoupei{% endblock %}
 {% block content %}
-<section class="auth-layout">
-  <div class="auth-intro">
-    <p class="eyebrow">SEU DINHEIRO, COM MAIS CLAREZA</p>
-    <h1>Um plano melhor começa com <em>um primeiro passo.</em></h1>
-    <p>Registre seus ganhos, organize despesas e aprenda sobre seus hábitos financeiros.</p>
-  </div>
-  <div class="form-panel">
-    <p class="eyebrow">NOVA CONTA</p>
-    <h2>Cadastre-se</h2>
-    <form method="post" novalidate>
+<section class="auth-layout auth-centered">
+  <div class="auth-card auth-card-wide card border-0 shadow-sm">
+    <div class="card-body p-4 p-sm-5">
+      <a class="auth-brand" href="{{ url_for('inicio') }}"><img src="{{ url_for('static', filename='icons/app-icon.svg') }}" alt=""><span>sapoupei</span></a>
+      <p class="eyebrow">NOVA CONTA</p>
+      <h1 class="auth-card-title">Cadastre-se</h1>
+      <p class="auth-card-copy">Um primeiro passo para organizar seu dinheiro com mais clareza.</p>
+      <form method="post" novalidate>
       {{ form.hidden_tag() }}
       {% for field in [form.full_name, form.email, form.age_range, form.city, form.password, form.confirm_password] %}
-        <div class="field">
-          {{ field.label }}
-          {{ field(class_="input", autocomplete="new-password" if field.name in ["password", "confirm_password"] else "off") }}
-          {% for error in field.errors %}<small class="field-error">{{ error }}</small>{% endfor %}
+        <div class="mb-3">
+          {{ field.label(class_="form-label") }}
+          {{ field(class_=("form-select" if field.name == "age_range" else "form-control") ~ (" is-invalid" if field.errors else ""), autocomplete="new-password" if field.name in ["password", "confirm_password"] else "off") }}
+          {% for error in field.errors %}<div class="invalid-feedback d-block">{{ error }}</div>{% endfor %}
         </div>
       {% endfor %}
-      <label class="consent-row">{{ form.consent() }} <span>{{ form.consent.label.text }}</span></label>
-      {% for error in form.consent.errors %}<small class="field-error">{{ error }}</small>{% endfor %}
-      <button class="primary-button" type="submit">Criar minha conta <span aria-hidden="true">&#8594;</span></button>
-    </form>
-    <p class="form-footer">Já tem uma conta? <a href="{{ url_for('auth.login') }}">Entrar</a></p>
+      <div class="form-check mb-3">
+        {{ form.consent(class_="form-check-input" ~ (" is-invalid" if form.consent.errors else "")) }}
+        {{ form.consent.label(class_="form-check-label") }}
+        {% for error in form.consent.errors %}<div class="invalid-feedback d-block">{{ error }}</div>{% endfor %}
+      </div>
+      <button class="btn btn-primary btn-lg w-100" type="submit"><i class="bi bi-person-plus me-2" aria-hidden="true"></i>Criar minha conta</button>
+      </form>
+      <p class="auth-card-footer">Já tem uma conta? <a href="{{ url_for('auth.login') }}">Entrar</a></p>
+    </div>
   </div>
 </section>
 {% endblock %}

@@ -21,11 +21,15 @@ if ("serviceWorker" in navigator) {
 if (deleteDialog) {
   let pendingDeleteForm = null;
   const description = deleteDialog.querySelector("#delete-dialog-description");
+  const title = deleteDialog.querySelector("#delete-dialog-title");
 
   document.querySelectorAll("[data-delete-trigger]").forEach((button) => {
     button.addEventListener("click", () => {
       pendingDeleteForm = button.closest("[data-delete-form]");
-      description.textContent = `A movimentação "${pendingDeleteForm.dataset.description}" será removida. Esta ação não pode ser desfeita.`;
+      const entity = pendingDeleteForm.dataset.deleteEntity || "movimentação";
+      const subject = pendingDeleteForm.dataset.deleteSubject || "A movimentação";
+      title.textContent = `Excluir ${entity}?`;
+      description.textContent = `${subject} "${pendingDeleteForm.dataset.description}" será removida. Esta ação não pode ser desfeita.`;
       deleteDialog.showModal();
     });
   });

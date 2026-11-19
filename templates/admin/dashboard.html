@@ -7,39 +7,39 @@
     <h1>Análise geral</h1>
     <p>Indicadores consolidados dos hábitos financeiros.</p>
   </div>
-  <a class="secondary-button" href="{{ url_for('admin.export_report') }}">Baixar relatório CSV <span aria-hidden="true">&#8595;</span></a>
+  <a class="btn btn-outline-primary" href="{{ url_for('admin.export_report') }}"><i class="bi bi-download me-1" aria-hidden="true"></i>Baixar relatório CSV</a>
 </section>
 
 <section class="summary-grid admin-summary-grid" aria-label="Indicadores gerais">
-  <article class="summary-item"><span>Usuários cadastrados</span><strong>{{ report.total_users }}</strong><small>Contas no sistema</small></article>
-  <article class="summary-item"><span>Receita média por usuário</span><strong>R$ {{ "%.2f"|format(report.avg_income) }}</strong><small>Acumulado registrado</small></article>
-  <article class="summary-item"><span>Despesa média por usuário</span><strong>R$ {{ "%.2f"|format(report.avg_expense) }}</strong><small>Acumulado registrado</small></article>
-  <article class="summary-item"><span>Média mensal de despesas</span><strong>R$ {{ "%.2f"|format(report.avg_monthly_expense) }}</strong><small>Total geral / 6 meses</small></article>
-  <article class="summary-item"><span>Usuários com saldo positivo</span><strong>{{ "%.1f"|format(report.saving_percent) }}%</strong><small>Receitas maiores que despesas</small></article>
-  <article class="summary-item summary-balance"><span>Saldo agregado</span><strong>R$ {{ "%.2f"|format(report.income_total - report.expense_total) }}</strong><small>Receitas menos despesas</small></article>
+  <article class="summary-item card border-0 shadow-sm"><span><i class="bi bi-people me-1 text-primary" aria-hidden="true"></i>Usuários cadastrados</span><strong>{{ report.total_users }}</strong><small>Contas no sistema</small></article>
+  <article class="summary-item card border-0 shadow-sm"><span><i class="bi bi-arrow-down-left-circle me-1 text-success" aria-hidden="true"></i>Receita média por usuário</span><strong>R$ {{ "%.2f"|format(report.avg_income) }}</strong><small>Acumulado registrado</small></article>
+  <article class="summary-item card border-0 shadow-sm"><span><i class="bi bi-arrow-up-right-circle me-1 text-danger" aria-hidden="true"></i>Despesa média por usuário</span><strong>R$ {{ "%.2f"|format(report.avg_expense) }}</strong><small>Acumulado registrado</small></article>
+  <article class="summary-item card border-0 shadow-sm"><span><i class="bi bi-calendar3 me-1 text-primary" aria-hidden="true"></i>Média mensal de despesas</span><strong>R$ {{ "%.2f"|format(report.avg_monthly_expense) }}</strong><small>Total geral / 6 meses</small></article>
+  <article class="summary-item card border-0 shadow-sm"><span><i class="bi bi-piggy-bank me-1 text-success" aria-hidden="true"></i>Usuários com saldo positivo</span><strong>{{ "%.1f"|format(report.saving_percent) }}%</strong><small>Receitas maiores que despesas</small></article>
+  <article class="summary-item summary-balance card border-0 shadow-sm"><span>Saldo agregado</span><strong>R$ {{ "%.2f"|format(report.income_total - report.expense_total) }}</strong><small>Receitas menos despesas</small></article>
 </section>
 
 <section class="admin-chart-grid" aria-label="Gráficos de análise">
-  <article class="chart-panel">
+  <article class="chart-panel card border-0 shadow-sm">
     <div class="chart-heading"><p class="eyebrow">PÚBLICO</p><h2>Usuários por faixa etária</h2></div>
     <div class="chart-area"><canvas id="age-chart" aria-label="Distribuição de usuários por faixa etária"></canvas></div>
   </article>
-  <article class="chart-panel">
+  <article class="chart-panel card border-0 shadow-sm">
     <div class="chart-heading"><p class="eyebrow">FAIXA ETÁRIA</p><h2>Despesa média por usuário</h2></div>
     <div class="chart-area"><canvas id="age-expense-chart" aria-label="Despesa média por usuário em cada faixa etária"></canvas></div>
   </article>
-  <article class="chart-panel">
+  <article class="chart-panel card border-0 shadow-sm">
     <div class="chart-heading"><p class="eyebrow">DESPESAS</p><h2>Gastos por categoria</h2></div>
     <div class="chart-area"><canvas id="category-chart" aria-label="Total de despesas por categoria"></canvas></div>
     <div class="frequency-summary"><span class="eyebrow">LANÇAMENTOS POR CATEGORIA</span>
-      {% for category, count in report.category_frequency_rows %}<div><span>{{ category }}</span><strong>{{ count }}</strong></div>{% else %}<p>Sem despesas categorizadas.</p>{% endfor %}
+      <ul class="list-group list-group-flush">{% for category, count in report.category_frequency_rows %}<li class="list-group-item d-flex justify-content-between gap-3 px-0"><span class="text-break">{{ category }}</span><span class="badge text-bg-light">{{ count }}</span></li>{% else %}<li class="list-group-item px-0 text-body-secondary">Sem despesas categorizadas.</li>{% endfor %}</ul>
     </div>
   </article>
-  <article class="chart-panel">
+  <article class="chart-panel card border-0 shadow-sm">
     <div class="chart-heading"><p class="eyebrow">COMPORTAMENTO</p><h2>Perfis financeiros</h2></div>
     <div class="chart-area"><canvas id="profile-chart" aria-label="Distribuição dos perfis financeiros"></canvas></div>
   </article>
-  <article class="chart-panel chart-panel-wide">
+  <article class="chart-panel chart-panel-wide card border-0 shadow-sm">
     <div class="chart-heading"><p class="eyebrow">EVOLUÇÃO</p><h2>Receitas e despesas mensais</h2></div>
     <div class="chart-area chart-area-wide"><canvas id="monthly-chart" aria-label="Comparação mensal entre receitas e despesas"></canvas></div>
   </article>

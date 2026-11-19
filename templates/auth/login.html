@@ -1,29 +1,30 @@
 {% extends "base.html" %}
 {% block title %}Entrar | sapoupei{% endblock %}
 {% block content %}
-<section class="auth-layout login-layout">
-  <div class="auth-intro">
-    <p class="eyebrow">EDUCAÇÃO FINANCEIRA • CONTROLE • PLANEJAMENTO</p>
-    <h1>Organize hoje.<br><em>Planeje seu amanhã.</em></h1>
-    <p>Um espaço simples para acompanhar sua vida financeira com mais intenção.</p>
-  </div>
-  <div class="form-panel">
-    <p class="eyebrow">BEM-VINDO DE VOLTA</p>
-    <h2>Acesse sua conta</h2>
-    <form method="post" novalidate>
+<section class="auth-layout auth-centered login-layout">
+  <div class="auth-card card border-0 shadow-sm">
+    <div class="card-body p-4 p-sm-5">
+      <a class="auth-brand" href="{{ url_for('inicio') }}"><img src="{{ url_for('static', filename='icons/app-icon.svg') }}" alt=""><span>sapoupei</span></a>
+      <p class="eyebrow">BEM-VINDO DE VOLTA</p>
+      <h1 class="auth-card-title">Acesse sua conta</h1>
+      <p class="auth-card-copy">Organize hoje. Planeje seu amanhã.</p>
+      <form method="post" novalidate>
       {{ form.hidden_tag() }}
       {% for field in [form.email, form.password] %}
-        <div class="field">
-          {{ field.label }}
-          {{ field(class_="input", autocomplete="email" if field.name == "email" else "current-password") }}
-          {% for error in field.errors %}<small class="field-error">{{ error }}</small>{% endfor %}
+        <div class="mb-3">
+          {{ field.label(class_="form-label") }}
+          {{ field(class_="form-control" ~ (" is-invalid" if field.errors else ""), autocomplete="email" if field.name == "email" else "current-password") }}
+          {% for error in field.errors %}<div class="invalid-feedback d-block">{{ error }}</div>{% endfor %}
         </div>
       {% endfor %}
-      <p class="password-recovery-link"><a href="{{ url_for('auth.esqueci_senha') }}">Esqueceu sua senha?</a></p>
-      <label class="consent-row">{{ form.remember() }} <span>{{ form.remember.label.text }}</span></label>
-      <button class="primary-button" type="submit">Entrar <span aria-hidden="true">&#8594;</span></button>
-    </form>
-    <p class="form-footer">Ainda não tem conta? <a href="{{ url_for('auth.cadastro') }}">Cadastre-se</a></p>
+      <div class="d-flex justify-content-between align-items-center flex-wrap gap-2 mb-4">
+        <div class="form-check">{{ form.remember(class_="form-check-input") }} {{ form.remember.label(class_="form-check-label") }}</div>
+        <a class="small fw-semibold" href="{{ url_for('auth.esqueci_senha') }}">Esqueceu sua senha?</a>
+      </div>
+      <button class="btn btn-primary btn-lg w-100" type="submit"><i class="bi bi-box-arrow-in-right me-2" aria-hidden="true"></i>Entrar</button>
+      </form>
+      <p class="auth-card-footer">Ainda não tem conta? <a href="{{ url_for('auth.cadastro') }}">Cadastre-se</a></p>
+    </div>
   </div>
 </section>
 {% endblock %}

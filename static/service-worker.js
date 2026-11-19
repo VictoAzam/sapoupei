@@ -1,9 +1,13 @@
-const CACHE_NAME = "sapoupei-static-v5";
+const CACHE_NAME = "sapoupei-static-v7";
 const STATIC_ASSETS = [
   "/static/css/style.css",
   "/static/js/app.js",
   "/static/icons/app-icon.svg",
   "/static/manifest.json",
+  "/static/vendor/bootstrap-5.3.3/bootstrap.min.css",
+  "/static/vendor/bootstrap-5.3.3/bootstrap.bundle.min.js",
+  "/static/vendor/bootstrap-icons-1.11.3/font/bootstrap-icons.min.css",
+  "/static/vendor/bootstrap-icons-1.11.3/font/fonts/bootstrap-icons.woff2?dd67030699838ea613ee6dbda90effa6",
 ];
 
 self.addEventListener("install", (event) => {

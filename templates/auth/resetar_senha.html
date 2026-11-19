@@ -1,26 +1,25 @@
 {% extends "base.html" %}
 {% block title %}Nova senha | sapoupei{% endblock %}
 {% block content %}
-<section class="auth-layout">
-  <div class="auth-intro">
-    <p class="eyebrow">ACESSO À SUA CONTA</p>
-    <h1>Escolha uma <em>nova senha.</em></h1>
-    <p>Use pelo menos 10 caracteres para proteger sua conta.</p>
-  </div>
-  <div class="form-panel">
-    <p class="eyebrow">NOVA CREDENCIAL</p>
-    <h2>Redefinir senha</h2>
-    <form method="post" novalidate>
+<section class="auth-layout auth-centered">
+  <div class="auth-card card border-0 shadow-sm">
+    <div class="card-body p-4 p-sm-5">
+      <a class="auth-brand" href="{{ url_for('inicio') }}"><img src="{{ url_for('static', filename='icons/app-icon.svg') }}" alt=""><span>sapoupei</span></a>
+      <p class="eyebrow">NOVA CREDENCIAL</p>
+      <h1 class="auth-card-title">Redefinir senha</h1>
+      <p class="auth-card-copy">Use pelo menos 10 caracteres para proteger sua conta.</p>
+      <form method="post" novalidate>
       {{ form.hidden_tag() }}
       {% for field in [form.password, form.confirm_password] %}
-        <div class="field">
-          {{ field.label }}
-          {{ field(class_="input", autocomplete="new-password") }}
-          {% for error in field.errors %}<small class="field-error">{{ error }}</small>{% endfor %}
+        <div class="mb-3">
+          {{ field.label(class_="form-label") }}
+          {{ field(class_="form-control" ~ (" is-invalid" if field.errors else ""), autocomplete="new-password") }}
+          {% for error in field.errors %}<div class="invalid-feedback d-block">{{ error }}</div>{% endfor %}
         </div>
       {% endfor %}
-      <button class="primary-button" type="submit">Atualizar senha <span aria-hidden="true">&#8594;</span></button>
-    </form>
+      <button class="btn btn-primary btn-lg w-100" type="submit"><i class="bi bi-shield-lock me-2" aria-hidden="true"></i>Atualizar senha</button>
+      </form>
+    </div>
   </div>
 </section>
 {% endblock %}

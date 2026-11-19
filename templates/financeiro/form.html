@@ -2,18 +2,20 @@
 {% block title %}{{ page_title }} | sapoupei{% endblock %}
 {% block content %}
 <section class="form-page-heading"><a class="back-link" href="{{ url_for('financeiro.lista_movimentacoes') }}">&#8592; Voltar às movimentações</a><p class="eyebrow">CONTROLE FINANCEIRO</p><h1>{{ page_title }}</h1></section>
-<section class="form-panel movement-form-panel">
+<section class="form-panel movement-form-panel card border-0 shadow-sm">
+  <div class="card-body p-4 p-md-5">
   <form method="post" novalidate>
     {{ form.hidden_tag() }}
     {% for field in [form.kind, form.description, form.amount, form.occurred_on, form.category_id] %}
-      <div class="field">
-        {{ field.label }}
-        {{ field(class_="input") }}
-        {% for error in field.errors %}<small class="field-error">{{ error }}</small>{% endfor %}
+      <div class="mb-3">
+        {{ field.label(class_="form-label") }}
+        {{ field(class_=("form-select" if field.name in ["kind", "category_id"] else "form-control") ~ (" is-invalid" if field.errors else "")) }}
+        {% for error in field.errors %}<div class="invalid-feedback d-block">{{ error }}</div>{% endfor %}
       </div>
     {% endfor %}
-    <p class="field-hint"><a href="{{ url_for('financeiro.nova_categoria') }}">＋ Criar uma categoria pessoal</a></p>
-    <button class="primary-button" type="submit">Salvar movimentação <span aria-hidden="true">&#8594;</span></button>
+    <p class="form-text"><a href="{{ url_for('financeiro.nova_categoria') }}"><i class="bi bi-plus-circle me-1" aria-hidden="true"></i>Criar categoria pessoal</a></p>
+    <button class="btn btn-primary" type="submit"><i class="bi bi-check2-circle me-1" aria-hidden="true"></i>Salvar movimentação</button>
   </form>
+  </div>
 </section>
 {% endblock %}

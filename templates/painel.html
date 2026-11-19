@@ -8,69 +8,167 @@
     <p>Seu panorama financeiro pessoal.</p>
   </div>
   <div class="action-row">
-    <a class="secondary-button" href="{{ url_for('financeiro.nova_movimentacao', tipo='receita') }}">＋ Receita</a>
-    <a class="primary-link" href="{{ url_for('financeiro.nova_movimentacao', tipo='despesa') }}">＋ Despesa</a>
+    <a class="btn btn-outline-primary" href="{{ url_for('financeiro.nova_movimentacao', tipo='receita') }}"><i class="bi bi-plus-circle me-1" aria-hidden="true"></i>Receita</a>
+    <a class="btn btn-primary" href="{{ url_for('financeiro.nova_movimentacao', tipo='despesa') }}"><i class="bi bi-plus-circle me-1" aria-hidden="true"></i>Despesa</a>
   </div>
 </section>
-<section class="summary-grid" aria-label="Resumo financeiro">
-  <article class="summary-item"><span>Receitas registradas</span><strong>R$ {{ "%.2f"|format(total_income) }}</strong><small>Acumulado</small></article>
-  <article class="summary-item"><span>Despesas registradas</span><strong>R$ {{ "%.2f"|format(total_expenses) }}</strong><small>Acumulado</small></article>
-  <article class="summary-item summary-balance"><span>Saldo registrado</span><strong>R$ {{ "%.2f"|format(balance) }}</strong><small>Receitas menos despesas</small></article>
+{% if (monthly_limit is not none and monthly_percent >= 80) or monthly_balance < 0 %}
+<section class="dashboard-alerts" aria-label="Alertas financeiros">
+  {% if monthly_limit is not none and monthly_percent > 100 %}
+    <div class="dashboard-alert dashboard-alert-critical" role="alert">
+      <span class="alert-marker" aria-hidden="true">!</span>
+      <div><strong>Meta mensal ultrapassada</strong><p>As despesas chegaram a {{ "%.1f"|format(monthly_percent)|replace('.', ',') }}% do limite, excedendo-o em {{ (monthly_spent - monthly_limit)|brl }}.</p></div>
+    </div>
+  {% elif monthly_limit is not none and monthly_percent >= 80 %}
+    <div class="dashboard-alert dashboard-alert-attention" role="status">
+      <span class="alert-marker" aria-hidden="true">!</span>
+      <div><strong>Atenção à meta mensal</strong><p>As despesas chegaram a {{ "%.1f"|format(monthly_percent)|replace('.', ',') }}% do limite definido.</p></div>
+    </div>
+  {% endif %}
+  {% if monthly_balance < 0 %}
+    <div class="dashboard-alert dashboard-alert-negative" role="status">
+      <span class="alert-marker" aria-hidden="true">−</span>
+      <div><strong>Saldo mensal negativo</strong><p>Até hoje, as despesas superam as receitas em {{ (-monthly_balance)|brl }}.</p></div>
+    </div>
+  {% endif %}
 </section>
-<section class="goal-panel" aria-labelledby="monthly-goal-title">
+{% endif %}
+<section class="summary-grid" aria-label="Resumo financeiro">
+  <article class="summary-item card border-0 shadow-sm"><div class="card-body d-flex flex-column align-items-start gap-2"><span><i class="bi bi-arrow-down-left-circle me-1 text-success" aria-hidden="true"></i>Receitas no mês</span><strong>{{ monthly_income|brl }}</strong><small class="summary-comparison mt-auto">
+    {% if previous_monthly_income > 0 %}
+      {{ "%.1f"|format(monthly_income_change_percent|abs)|replace('.', ',') }}% {{ "a mais" if monthly_income_change > 0 else "a menos" if monthly_income_change < 0 else "sem variação" }} que no período anterior
+    {% elif monthly_income > 0 %}
+      Sem base de comparação no período anterior
+    {% else %}
+      Sem receitas nos dois períodos
+    {% endif %}
+  </small></div></article>
+  <article class="summary-item card border-0 shadow-sm"><div class="card-body d-flex flex-column align-items-start gap-2"><span><i class="bi bi-arrow-up-right-circle me-1 text-danger" aria-hidden="true"></i>Despesas no mês</span><strong>{{ monthly_spent|brl }}</strong><small class="summary-comparison mt-auto">
+    {% if previous_monthly_expenses > 0 %}
+      {{ "%.1f"|format(monthly_expenses_change_percent|abs)|replace('.', ',') }}% {{ "a mais" if monthly_expenses_change > 0 else "a menos" if monthly_expenses_change < 0 else "sem variação" }} que no período anterior
+    {% elif monthly_spent > 0 %}
+      Sem base de comparação no período anterior
+    {% else %}
+      Sem despesas nos dois períodos
+    {% endif %}
+  </small></div></article>
+  <article class="summary-item summary-balance card border-0 shadow-sm"><div class="card-body d-flex flex-column align-items-start gap-2"><span><i class="bi bi-wallet2 me-1" aria-hidden="true"></i>Saldo do mês</span><strong class="{{ 'text-danger' if monthly_balance < 0 else 'text-success' if monthly_balance > 0 else '' }}">{{ monthly_balance|brl }}</strong><small class="mt-auto">Saldo anterior: {{ previous_monthly_balance|brl }}</small></div></article>
+</section>
+<section class="goal-panel card border-0 shadow-sm" aria-labelledby="monthly-goal-title">
+  <div class="card-body">
   <div class="goal-heading">
-    <div><p class="eyebrow">ORÇAMENTO DO MÊS</p><h2 id="monthly-goal-title">Meta de gastos mensais</h2></div>
-    <a class="text-button" href="{{ url_for('financeiro.meta_mensal') }}">{{ "Ajustar meta" if monthly_limit is not none else "Definir meta" }}</a>
+      <div><p class="eyebrow">ORÇAMENTO DO MÊS</p><h2 id="monthly-goal-title">Meta de gastos mensais</h2></div>
+    <a class="btn btn-sm btn-outline-primary" href="{{ url_for('financeiro.meta_mensal') }}">{{ "Ajustar meta" if monthly_limit is not none else "Definir meta" }}</a>
   </div>
   {% if monthly_limit is not none %}
-    <div class="goal-amounts"><strong>R$ {{ "%.2f"|format(monthly_spent) }}</strong><span>gastos até hoje de R$ {{ "%.2f"|format(monthly_limit) }}</span></div>
+    <div class="goal-amounts"><strong>{{ monthly_spent|brl }}</strong><span>gastos até hoje de {{ monthly_limit|brl }}</span></div>
     <div class="progress goal-progress" role="progressbar" aria-label="Uso da meta de gastos mensal" aria-valuenow="{{ monthly_progress }}" aria-valuemin="0" aria-valuemax="100">
       <div class="progress-bar {{ monthly_progress_class }}" style="width: {{ monthly_progress }}%">{{ "%.0f"|format(monthly_percent) }}%</div>
     </div>
-    {% if monthly_percent >= 100 %}
-      <p class="goal-status over-limit">Limite ultrapassado em R$ {{ "%.2f"|format(-monthly_remaining) }}.</p>
+    {% if monthly_percent > 100 %}
+      <p class="goal-status over-limit">Limite ultrapassado em {{ (-monthly_remaining)|brl }}.</p>
     {% elif monthly_percent >= 80 %}
-      <p class="goal-status near-limit">Restam R$ {{ "%.2f"|format(monthly_remaining) }} até o limite.</p>
+      <p class="goal-status near-limit">{% if monthly_percent == 100 %}Limite atingido neste mês.{% else %}Restam {{ monthly_remaining|brl }} até o limite.{% endif %}</p>
     {% else %}
-      <p class="goal-status">Restam R$ {{ "%.2f"|format(monthly_remaining) }} até o limite.</p>
+      <p class="goal-status">Restam {{ monthly_remaining|brl }} até o limite.</p>
     {% endif %}
   {% else %}
     <p class="goal-empty">Defina um limite para comparar com as despesas registradas neste mês.</p>
   {% endif %}
+  </div>
 </section>
-<section class="profile-strip">
+<section class="profile-strip card border-0 shadow-sm">
+  <div class="card-body d-flex flex-column flex-sm-row align-items-start align-items-sm-center justify-content-between gap-3 gap-sm-4">
   <div><p class="eyebrow">SEU PERFIL FINANCEIRO</p><h2>{{ profile_type }}</h2><p>{{ profile_text }}</p></div>
-  <a class="text-button" href="{{ url_for('financeiro.dicas') }}">Ver dicas &#8594;</a>
+  <a class="btn btn-outline-primary flex-shrink-0" href="{{ url_for('financeiro.dicas') }}"><i class="bi bi-lightbulb me-1" aria-hidden="true"></i>Ver dicas</a>
+  </div>
 </section>
-<section class="chart-panel user-chart-panel">
-  <div class="chart-heading"><p class="eyebrow">ÚLTIMOS SEIS MESES</p><h2>Receitas e despesas</h2></div>
-  <div class="chart-area chart-area-wide"><canvas id="personal-monthly-chart" aria-label="Gráfico mensal das suas receitas e despesas"></canvas></div>
+<section class="user-chart-grid" aria-label="Gráficos do orçamento pessoal">
+  <article class="chart-panel card border-0 shadow-sm">
+    <div class="card-body">
+    <div class="chart-heading"><p class="eyebrow">ÚLTIMOS SEIS MESES</p><h2>Receitas e despesas</h2></div>
+    {% if has_month_activity %}
+      <div class="chart-area chart-area-wide"><canvas id="personal-monthly-chart" role="img" aria-label="Gráfico mensal das suas receitas e despesas"></canvas></div>
+    {% else %}
+      <p class="chart-empty-state" role="status">Ainda não há movimentações nos últimos seis meses. Registre receitas ou despesas para acompanhar sua evolução.</p>
+    {% endif %}
+    </div>
+  </article>
+  <article class="chart-panel card border-0 shadow-sm">
+    <div class="card-body">
+    <div class="chart-heading"><p class="eyebrow">DESPESAS DESTE MÊS</p><h2>Por categoria</h2></div>
+    {% if month_category_expenses %}
+      <div class="chart-area"><canvas id="personal-category-chart" role="img" aria-label="Gráfico de rosca das despesas deste mês por categoria"></canvas></div>
+    {% else %}
+      <p class="chart-empty-state" role="status">Nenhuma despesa registrada neste mês até hoje.</p>
+    {% endif %}
+    </div>
+  </article>
 </section>
 <section class="activity-section">
   <div class="section-heading"><div><p class="eyebrow">MOVIMENTAÇÕES</p><h2>Atividade recente</h2></div><a href="{{ url_for('financeiro.lista_movimentacoes') }}">Ver todas &#8594;</a></div>
   {% if movements %}
-    <div class="movement-list">
+    <div class="movement-list list-group list-group-flush">
       {% for movement in movements %}
-        <article class="movement-row">
+        <article class="movement-row list-group-item">
           <span class="movement-icon {{ 'income-icon' if movement.kind == 'receita' else 'expense-icon' }}">{{ '+' if movement.kind == 'receita' else '-' }}</span>
           <div class="movement-description"><strong>{{ movement.description }}</strong><small>{{ movement.occurred_on.strftime('%d/%m/%Y') }}{% if movement.category %} · {{ movement.category.name }}{% endif %}</small></div>
-          <strong class="movement-amount {{ 'positive' if movement.kind == 'receita' else '' }}">{{ '+' if movement.kind == 'receita' else '-' }} R$ {{ "%.2f"|format(movement.amount) }}</strong>
+          <strong class="movement-amount {{ 'positive' if movement.kind == 'receita' else '' }}"><span class="badge {{ 'text-bg-success' if movement.kind == 'receita' else 'text-bg-danger' }}">{{ '+' if movement.kind == 'receita' else '-' }} {{ movement.amount|brl }}</span></strong>
         </article>
       {% endfor %}
     </div>
   {% else %}
-    <div class="empty-state"><span class="empty-mark">+</span><h3>Seu histórico começa aqui</h3><p>Adicione sua primeira receita ou despesa para acompanhar seu saldo.</p><div class="action-row"><a class="secondary-button" href="{{ url_for('financeiro.nova_movimentacao', tipo='receita') }}">＋ Receita</a><a class="primary-link" href="{{ url_for('financeiro.nova_movimentacao', tipo='despesa') }}">＋ Despesa</a></div></div>
+    <div class="empty-state card border-0 shadow-sm"><span class="empty-mark">+</span><h3>Seu histórico começa aqui</h3><p>Adicione uma receita ou despesa para acompanhar seu saldo.</p><div class="action-row"><a class="btn btn-outline-primary" href="{{ url_for('financeiro.nova_movimentacao', tipo='receita') }}"><i class="bi bi-plus-circle me-1" aria-hidden="true"></i>Receita</a><a class="btn btn-primary" href="{{ url_for('financeiro.nova_movimentacao', tipo='despesa') }}"><i class="bi bi-plus-circle me-1" aria-hidden="true"></i>Despesa</a></div></div>
   {% endif %}
 </section>
+{% if has_month_activity or month_category_expenses %}
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.7/dist/chart.umd.min.js"></script>
 <script>
-  new Chart(document.getElementById('personal-monthly-chart'), {
-    type: 'bar',
-    data: { labels: {{ month_history.labels|tojson }}, datasets: [
-      { label: 'Receitas', data: {{ month_history.income|tojson }}, backgroundColor: '#176b54', borderRadius: 3 },
-      { label: 'Despesas', data: {{ month_history.expenses|tojson }}, backgroundColor: '#d2774f', borderRadius: 3 }
-    ] },
-    options: { maintainAspectRatio: false, scales: { y: { beginAtZero: true, grid: { color: '#edf0ed' } }, x: { grid: { display: false } } } }
-  });
+  const currencyFormatter = new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' });
+  const chartColors = ['#176b54', '#d2774f', '#4b8290', '#d4a833', '#8e6e9e', '#5a9a70'];
+  const currencyTooltip = (context) => {
+    const parsed = context.parsed;
+    const value = typeof parsed === 'number' ? parsed : parsed.y;
+    const label = context.dataset.label || context.label;
+    return `${label}: ${currencyFormatter.format(value)}`;
+  };
+
+  {% if has_month_activity %}
+    new Chart(document.getElementById('personal-monthly-chart'), {
+      type: 'bar',
+      data: { labels: {{ month_history.labels|tojson }}, datasets: [
+        { label: 'Receitas', data: {{ month_history.income|map('float')|list|tojson }}, backgroundColor: '#176b54', borderRadius: 3 },
+        { label: 'Despesas', data: {{ month_history.expenses|map('float')|list|tojson }}, backgroundColor: '#d2774f', borderRadius: 3 }
+      ] },
+      options: {
+        maintainAspectRatio: false,
+        scales: { y: { beginAtZero: true, grid: { color: '#edf0ed' } }, x: { grid: { display: false } } },
+        plugins: { tooltip: { callbacks: { label: currencyTooltip } } }
+      }
+    });
+  {% endif %}
+
+  {% if month_category_expenses %}
+    new Chart(document.getElementById('personal-category-chart'), {
+      type: 'doughnut',
+      data: {
+        labels: {{ month_category_expenses|map(attribute=0)|list|tojson }},
+        datasets: [{
+          data: {{ month_category_expenses|map(attribute=1)|map('float')|list|tojson }},
+          backgroundColor: chartColors,
+          borderWidth: 0,
+          hoverOffset: 5
+        }]
+      },
+      options: {
+        maintainAspectRatio: false,
+        plugins: {
+          legend: { position: 'bottom', labels: { usePointStyle: true, padding: 18 } },
+          tooltip: { callbacks: { label: currencyTooltip } }
+        }
+      }
+    });
+  {% endif %}
 </script>
+{% endif %}
 {% endblock %}

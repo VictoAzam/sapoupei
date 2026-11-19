@@ -1,0 +1,79 @@
+{% extends "base.html" %}
+{% block title %}Categorias | sapoupei{% endblock %}
+{% block content %}
+<section class="dashboard-heading category-page-heading">
+  <div>
+    <p class="eyebrow">ORGANIZAÇÃO</p>
+    <h1>Minhas categorias</h1>
+    <p>Gerencie suas categorias pessoais e consulte as opções globais.</p>
+  </div>
+  <a class="btn btn-primary" href="{{ url_for('financeiro.nova_categoria') }}"><i class="bi bi-plus-circle me-1" aria-hidden="true"></i>Nova categoria</a>
+</section>
+
+<section class="category-section card border-0 shadow-sm" aria-labelledby="personal-categories-title">
+  <div class="card-body">
+  <div class="category-section-heading">
+    <h2 id="personal-categories-title">Categorias pessoais</h2>
+    <span class="badge text-bg-light">{{ personal_categories|length }} {{ "categoria" if personal_categories|length == 1 else "categorias" }}</span>
+  </div>
+  {% if personal_categories %}
+    <div class="category-list list-group list-group-flush">
+      {% for category in personal_categories %}
+        <article class="category-row list-group-item">
+          <div class="category-name">
+            <strong>{{ category.name }}</strong>
+            <span class="badge {{ 'text-bg-success' if category.kind == 'receita' else 'text-bg-danger' }}">{{ "Receita" if category.kind == "receita" else "Despesa" }}</span>
+          </div>
+          <div class="category-actions">
+            <a class="btn btn-sm btn-outline-primary" href="{{ url_for('financeiro.editar_categoria', category_id=category.id) }}"><i class="bi bi-pencil me-1" aria-hidden="true"></i>Editar</a>
+            <form action="{{ url_for('financeiro.excluir_categoria', category_id=category.id) }}" method="post" data-delete-form data-description="{{ category.name }}" data-delete-entity="categoria" data-delete-subject="A categoria">
+              {{ delete_form.hidden_tag() }}
+              <button class="btn btn-sm btn-outline-danger" type="button" data-delete-trigger><i class="bi bi-trash me-1" aria-hidden="true"></i>Excluir</button>
+            </form>
+          </div>
+        </article>
+      {% endfor %}
+    </div>
+  {% else %}
+    <div class="alert alert-light mb-0">Você ainda não criou categorias pessoais. Crie uma para organizar seus lançamentos.</div>
+  {% endif %}
+  </div>
+</section>
+
+<section class="category-section card border-0 shadow-sm" aria-labelledby="global-categories-title">
+  <div class="card-body">
+  <div class="category-section-heading">
+    <h2 id="global-categories-title">Categorias globais</h2>
+    <span class="badge text-bg-light">Consulta</span>
+  </div>
+  {% if global_categories %}
+    <div class="category-list list-group list-group-flush">
+      {% for category in global_categories %}
+        <article class="category-row global-category-row list-group-item">
+          <div class="category-name">
+            <strong>{{ category.name }}</strong>
+            <span class="badge {{ 'text-bg-success' if category.kind == 'receita' else 'text-bg-danger' }}">{{ "Receita" if category.kind == "receita" else "Despesa" }}</span>
+          </div>
+          <span class="category-readonly badge text-bg-light">Padrão do sistema</span>
+        </article>
+      {% endfor %}
+    </div>
+  {% else %}
+    <div class="alert alert-light mb-0">Não há categorias globais disponíveis.</div>
+  {% endif %}
+  </div>
+</section>
+
+<dialog class="confirm-dialog" data-delete-dialog aria-labelledby="delete-dialog-title" aria-describedby="delete-dialog-description">
+  <form method="dialog" class="confirm-dialog-close-form">
+    <button class="btn-close" aria-label="Fechar confirmação"></button>
+  </form>
+  <p class="eyebrow">CONFIRMAÇÃO</p>
+  <h2 id="delete-dialog-title">Excluir categoria?</h2>
+  <p id="delete-dialog-description">A categoria será removida. As movimentações vinculadas serão preservadas sem categoria.</p>
+  <div class="confirm-dialog-actions">
+    <button class="btn btn-outline-secondary" type="button" data-delete-cancel>Cancelar</button>
+    <button class="btn btn-danger" type="button" data-delete-confirm>Excluir</button>
+  </div>
+</dialog>
+{% endblock %}

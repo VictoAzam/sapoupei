@@ -6,16 +6,18 @@
   <p class="eyebrow">PLANEJAMENTO</p>
   <h1>Meta de gastos mensais</h1>
 </section>
-<section class="form-panel movement-form-panel">
+<section class="form-panel movement-form-panel card border-0 shadow-sm">
+  <div class="card-body p-4 p-md-5">
   <form method="post" novalidate>
     {{ form.hidden_tag() }}
-    <div class="field">
-      {{ form.monthly_limit.label }}
-      {{ form.monthly_limit(class_="input") }}
-      {% for error in form.monthly_limit.errors %}<small class="field-error">{{ error }}</small>{% endfor %}
-      <small class="field-hint">A meta é opcional. Deixe em branco para removê-la.</small>
+    <div class="mb-4">
+      {{ form.monthly_limit.label(class_="form-label") }}
+      {{ form.monthly_limit(class_="form-control" ~ (" is-invalid" if form.monthly_limit.errors else "")) }}
+      {% for error in form.monthly_limit.errors %}<div class="invalid-feedback d-block">{{ error }}</div>{% endfor %}
+      <div class="form-text">A meta é opcional. Deixe em branco para removê-la.</div>
     </div>
-    <button class="primary-button" type="submit">Salvar meta <span aria-hidden="true">&#8594;</span></button>
+    <button class="btn btn-primary" type="submit"><i class="bi bi-check2-circle me-1" aria-hidden="true"></i>Salvar meta</button>
   </form>
+  </div>
 </section>
 {% endblock %}

@@ -2,8 +2,8 @@ from datetime import date
 from decimal import Decimal
 
 from flask_wtf import FlaskForm
-from wtforms import BooleanField, DateField, DecimalField, PasswordField, SelectField, StringField, SubmitField
-from wtforms.validators import DataRequired, Email, EqualTo, Length, NumberRange, Optional
+from wtforms import BooleanField, DateField, DecimalField, IntegerField, PasswordField, SelectField, StringField, SubmitField
+from wtforms.validators import DataRequired, Email, EqualTo, InputRequired, Length, NumberRange, Optional
 
 
 class RegistrationForm(FlaskForm):
@@ -89,6 +89,97 @@ class MovementForm(FlaskForm):
         validators=[DataRequired()],
     )
     submit = SubmitField("Salvar movimentação")
+
+
+class MovementFilterForm(FlaskForm):
+    tipo = SelectField(
+        "Tipo",
+        choices=[("", "Todos os tipos"), ("receita", "Receita"), ("despesa", "Despesa")],
+        validators=[Optional()],
+    )
+    categoria = SelectField(
+        "Categoria",
+        coerce=int,
+        choices=[(0, "Todas as categorias"), (-1, "Sem categoria")],
+        validators=[Optional()],
+    )
+    data_inicial = DateField(
+        "Data inicial",
+        format="%Y-%m-%d",
+        validators=[Optional()],
+        render_kw={"type": "date"},
+    )
+    data_final = DateField(
+        "Data final",
+        format="%Y-%m-%d",
+        validators=[Optional()],
+        render_kw={"type": "date"},
+    )
+    busca = StringField("Descrição", validators=[Optional(), Length(max=160)])
+
+
+class InvestmentSimulatorForm(FlaskForm):
+    initial_amount = DecimalField(
+        "Valor inicial (R$)",
+        places=2,
+        default=Decimal("1000.00"),
+        validators=[
+            InputRequired(),
+            NumberRange(
+                min=Decimal("0"),
+                max=Decimal("9999999999.99"),
+                message="Informe um valor entre R$ 0,00 e R$ 9.999.999.999,99.",
+            ),
+        ],
+        render_kw={"type": "number", "step": "0.01", "min": "0", "inputmode": "decimal"},
+    )
+    monthly_contribution = DecimalField(
+        "Aporte mensal (R$)",
+        places=2,
+        default=Decimal("100.00"),
+        validators=[
+            InputRequired(),
+            NumberRange(
+                min=Decimal("0"),
+                max=Decimal("9999999999.99"),
+                message="Informe um valor entre R$ 0,00 e R$ 9.999.999.999,99.",
+            ),
+        ],
+        render_kw={"type": "number", "step": "0.01", "min": "0", "inputmode": "decimal"},
+    )
+    interest_rate = DecimalField(
+        "Taxa de juros (%)",
+        places=4,
+        default=Decimal("12.00"),
+        validators=[
+            InputRequired(),
+            NumberRange(
+                min=Decimal("0"),
+                max=Decimal("100"),
+                message="Informe uma taxa entre 0% e 100%.",
+            ),
+        ],
+        render_kw={"type": "number", "step": "0.01", "min": "0", "max": "100", "inputmode": "decimal"},
+    )
+    rate_period = SelectField(
+        "Período da taxa",
+        choices=[("mensal", "Ao mês"), ("anual", "Ao ano")],
+        default="anual",
+        validators=[InputRequired()],
+    )
+    duration = IntegerField(
+        "Prazo",
+        default=10,
+        validators=[InputRequired(), NumberRange(min=1, max=600)],
+        render_kw={"type": "number", "min": "1", "max": "600", "step": "1"},
+    )
+    duration_unit = SelectField(
+        "Unidade do prazo",
+        choices=[("meses", "Meses"), ("anos", "Anos")],
+        default="anos",
+        validators=[InputRequired()],
+    )
+    submit = SubmitField("Simular investimento")
 
 
 class DeleteForm(FlaskForm):

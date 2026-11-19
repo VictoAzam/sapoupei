@@ -4,60 +4,86 @@
 <section class="dashboard-heading">
   <div><p class="eyebrow">SEU HISTÓRICO</p><h1>Movimentações</h1><p>Receitas e despesas da sua conta.</p></div>
   <div class="action-row">
-    <a class="secondary-button" href="{{ url_for('financeiro.nova_movimentacao', tipo='receita') }}">＋ Receita</a>
-    <a class="primary-link" href="{{ url_for('financeiro.nova_movimentacao', tipo='despesa') }}">＋ Despesa</a>
+    <a class="btn btn-outline-primary" href="{{ url_for('financeiro.nova_movimentacao', tipo='receita') }}"><i class="bi bi-plus-circle me-1" aria-hidden="true"></i>Receita</a>
+    <a class="btn btn-primary" href="{{ url_for('financeiro.nova_movimentacao', tipo='despesa') }}"><i class="bi bi-plus-circle me-1" aria-hidden="true"></i>Despesa</a>
   </div>
 </section>
-<nav class="filter-row" aria-label="Filtrar movimentações">
-  <a class="filter-link {{ 'active' if not selected_kind else '' }}" href="{{ url_for('financeiro.lista_movimentacoes') }}">Todas</a>
-  <a class="filter-link {{ 'active' if selected_kind == 'receita' else '' }}" href="{{ url_for('financeiro.lista_movimentacoes', tipo='receita') }}">Receitas</a>
-  <a class="filter-link {{ 'active' if selected_kind == 'despesa' else '' }}" href="{{ url_for('financeiro.lista_movimentacoes', tipo='despesa') }}">Despesas</a>
-</nav>
+<form class="movement-filter-form card border-0 shadow-sm" method="get" action="{{ url_for('financeiro.lista_movimentacoes') }}">
+  <div class="card-body">
+  <div class="row g-3">
+    {% for field in [filter_form.tipo, filter_form.categoria, filter_form.data_inicial, filter_form.data_final, filter_form.busca] %}
+      <div class="col-12 col-sm-6 col-lg-3 {{ 'col-lg-6' if field.name == 'busca' else '' }}">
+        {{ field.label(class_="form-label") }}
+        {% if field.name == "busca" %}
+          {{ field(class_="form-control", placeholder="Ex.: mercado") }}
+        {% else %}
+          {{ field(class_="form-select" if field.name in ["tipo", "categoria"] else "form-control") }}
+        {% endif %}
+      </div>
+    {% endfor %}
+  </div>
+  {% if filter_errors %}
+    <div class="alert alert-danger py-2 mb-0" role="alert">
+      {% for error in filter_errors %}<p>{{ error }}</p>{% endfor %}
+    </div>
+  {% endif %}
+  <div class="filter-actions d-flex align-items-center flex-wrap gap-2 mt-3">
+    <button class="btn btn-primary" type="submit"><i class="bi bi-funnel me-1" aria-hidden="true"></i>Aplicar filtros</button>
+    {% if pagination_args %}<a class="btn btn-outline-secondary" href="{{ url_for('financeiro.lista_movimentacoes') }}">Limpar filtros</a>{% endif %}
+  </div>
+  </div>
+</form>
 {% if movements.items %}
-  <div class="movement-list">
+  <div class="card border-0 shadow-sm table-responsive movement-table-wrap">
+    <table class="table table-hover align-middle mb-0">
+      <thead><tr><th scope="col">Movimentação</th><th scope="col">Tipo</th><th scope="col">Data</th><th scope="col" class="text-end">Valor</th><th scope="col" class="text-end">Ações</th></tr></thead>
+      <tbody>
     {% for movement in movements.items %}
-      <article class="movement-row">
-        <span class="movement-icon {{ 'income-icon' if movement.kind == 'receita' else 'expense-icon' }}">{{ '+' if movement.kind == 'receita' else '-' }}</span>
-        <div class="movement-description"><strong>{{ movement.description }}</strong><small>{{ movement.occurred_on.strftime('%d/%m/%Y') }}{% if movement.category %} · {{ movement.category.name }}{% else %} · Sem categoria{% endif %}</small></div>
-        <strong class="movement-amount {{ 'positive' if movement.kind == 'receita' else '' }}">{{ '+' if movement.kind == 'receita' else '-' }} R$ {{ "%.2f"|format(movement.amount) }}</strong>
-        <div class="movement-actions">
-          <a class="icon-link" href="{{ url_for('financeiro.editar_movimentacao', movement_id=movement.id) }}" aria-label="Editar {{ movement.description }}" title="Editar">Editar</a>
+      <tr class="movement-row">
+        <td><div class="movement-description"><strong>{{ movement.description }}</strong><small>{{ movement.category.name if movement.category else "Sem categoria" }}</small></div></td>
+        <td><span class="badge {{ 'text-bg-success' if movement.kind == 'receita' else 'text-bg-danger' }}">{{ "Receita" if movement.kind == "receita" else "Despesa" }}</span></td>
+        <td>{{ movement.occurred_on.strftime('%d/%m/%Y') }}</td>
+        <td class="text-end"><strong class="movement-amount {{ 'positive' if movement.kind == 'receita' else '' }}">{{ '+' if movement.kind == 'receita' else '-' }} R$ {{ "%.2f"|format(movement.amount) }}</strong></td>
+        <td><div class="movement-actions justify-content-end">
+          <a class="btn btn-sm btn-outline-primary" href="{{ url_for('financeiro.editar_movimentacao', movement_id=movement.id) }}" aria-label="Editar {{ movement.description }}" title="Editar"><i class="bi bi-pencil" aria-hidden="true"></i><span class="visually-hidden">Editar</span></a>
           <form action="{{ url_for('financeiro.excluir_movimentacao', movement_id=movement.id) }}" method="post" data-delete-form data-description="{{ movement.description }}">
             {{ delete_form.hidden_tag() }}
-            <button class="icon-link danger-link" type="button" data-delete-trigger>Excluir</button>
+            <button class="btn btn-sm btn-outline-danger" type="button" data-delete-trigger aria-label="Excluir {{ movement.description }}"><i class="bi bi-trash" aria-hidden="true"></i><span class="visually-hidden">Excluir</span></button>
           </form>
-        </div>
-      </article>
+        </div></td>
+      </tr>
     {% endfor %}
+      </tbody>
+    </table>
   </div>
   {% if movements.pages > 1 %}
     <nav class="pagination-row" aria-label="Paginação das movimentações">
       {% if movements.has_prev %}
-        <a class="secondary-button pagination-button" href="{{ url_for('financeiro.lista_movimentacoes', tipo=selected_kind, page=movements.prev_num) }}" rel="prev">&#8592; Anterior</a>
+        <a class="btn btn-outline-primary pagination-button" href="{{ previous_url }}" rel="prev"><i class="bi bi-arrow-left me-1" aria-hidden="true"></i>Anterior</a>
       {% else %}
-        <span class="secondary-button pagination-button" aria-disabled="true">&#8592; Anterior</span>
+        <span class="btn btn-outline-secondary pagination-button" aria-disabled="true"><i class="bi bi-arrow-left me-1" aria-hidden="true"></i>Anterior</span>
       {% endif %}
       <span class="pagination-status">Página {{ movements.page }} de {{ movements.pages }}</span>
       {% if movements.has_next %}
-        <a class="secondary-button pagination-button" href="{{ url_for('financeiro.lista_movimentacoes', tipo=selected_kind, page=movements.next_num) }}" rel="next">Próxima &#8594;</a>
+        <a class="btn btn-outline-primary pagination-button" href="{{ next_url }}" rel="next">Próxima<i class="bi bi-arrow-right ms-1" aria-hidden="true"></i></a>
       {% else %}
-        <span class="secondary-button pagination-button" aria-disabled="true">Próxima &#8594;</span>
+        <span class="btn btn-outline-secondary pagination-button" aria-disabled="true">Próxima<i class="bi bi-arrow-right ms-1" aria-hidden="true"></i></span>
       {% endif %}
     </nav>
   {% endif %}
 {% else %}
-  <div class="empty-state"><span class="empty-mark">＋</span><h2>Nenhuma movimentação por aqui</h2><p>Adicione uma receita ou despesa para começar seu histórico.</p></div>
+  <div class="empty-state card border-0 shadow-sm"><span class="empty-mark">＋</span><h2>Nenhuma movimentação por aqui</h2><p>Adicione uma receita ou despesa para começar seu histórico.</p></div>
 {% endif %}
 <dialog class="confirm-dialog" data-delete-dialog aria-labelledby="delete-dialog-title" aria-describedby="delete-dialog-description">
   <form method="dialog" class="confirm-dialog-close-form">
-    <button class="icon-link" aria-label="Fechar confirmação">Fechar</button>
+    <button class="btn-close" aria-label="Fechar confirmação"></button>
   </form>
   <p class="eyebrow">CONFIRMAÇÃO</p>
   <h2 id="delete-dialog-title">Excluir movimentação?</h2>
   <p id="delete-dialog-description">Esta ação não pode ser desfeita.</p>
   <div class="confirm-dialog-actions">
-    <button class="secondary-button" type="button" data-delete-cancel>Cancelar</button>
-    <button class="danger-button" type="button" data-delete-confirm>Excluir</button>
+    <button class="btn btn-outline-secondary" type="button" data-delete-cancel>Cancelar</button>
+    <button class="btn btn-danger" type="button" data-delete-confirm>Excluir</button>
   </div>
 </dialog>
 {% endblock %}

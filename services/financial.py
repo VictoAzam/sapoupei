@@ -1,13 +1,18 @@
+from calendar import monthrange
 from datetime import date, datetime, timedelta, timezone
-from decimal import Decimal
+from decimal import Decimal, ROUND_HALF_UP, localcontext
 
-from sqlalchemy import case, func, select
+from sqlalchemy import case, func, or_, select
 
 from extensions import db
-from models import FinancialProfile, Movement, money_total
+from models import Category, FinancialProfile, Movement, money_total
 
 
 PROFILE_WINDOW_DAYS = 30
+MAX_SIMULATION_MONTHS = 600
+MAX_SIMULATION_RATE_PERCENT = Decimal("100")
+MAX_SIMULATION_AMOUNT = Decimal("9999999999.99")
+MONEY_CENT = Decimal("0.01")
 
 
 def profile_start_date(today: date | None = None) -> date:
@@ -25,6 +30,140 @@ def get_totals(
         ).where(Movement.user_id == user_id, date_filter)
     ).one()
     return money_total(income), money_total(expenses)
+
+
+def _get_period_totals(
+    user_id: int, start_date: date, end_date: date
+) -> tuple[Decimal, Decimal]:
+    income, expenses = db.session.execute(
+        select(
+            func.sum(
+                case(
+                    (Movement.kind == "receita", Movement.amount),
+                    else_=Decimal("0.00"),
+                )
+            ),
+            func.sum(
+                case(
+                    (Movement.kind == "despesa", Movement.amount),
+                    else_=Decimal("0.00"),
+                )
+            ),
+        ).where(
+            Movement.user_id == user_id,
+            Movement.occurred_on >= start_date,
+            Movement.occurred_on <= end_date,
+        )
+    ).one()
+    return money_total(income), money_total(expenses)
+
+
+def get_month_comparison(user_id: int, today: date | None = None) -> dict:
+    current = today or date.today()
+    current_start = current.replace(day=1)
+    previous_month = current_start - timedelta(days=1)
+    previous_start = previous_month.replace(day=1)
+    previous_end = previous_start.replace(
+        day=min(current.day, monthrange(previous_start.year, previous_start.month)[1])
+    )
+
+    current_income, current_expenses = _get_period_totals(
+        user_id, current_start, current
+    )
+    previous_income, previous_expenses = _get_period_totals(
+        user_id, previous_start, previous_end
+    )
+    return {
+        "current": {"income": current_income, "expenses": current_expenses},
+        "previous": {"income": previous_income, "expenses": previous_expenses},
+        "current_start": current_start,
+        "current_end": current,
+        "previous_start": previous_start,
+        "previous_end": previous_end,
+    }
+
+
+def get_month_expenses_by_category(
+    user_id: int, today: date | None = None
+) -> list[tuple[str, Decimal]]:
+    current = today or date.today()
+    month_start = current.replace(day=1)
+    category_label = case(
+        (Category.name.is_(None), "Sem categoria"),
+        (or_(Category.user_id.is_(None), Category.user_id == user_id), Category.name),
+        else_="Sem categoria",
+    )
+    rows = db.session.execute(
+        select(category_label, func.sum(Movement.amount))
+        .select_from(Movement)
+        .outerjoin(Category, Movement.category_id == Category.id)
+        .where(
+            Movement.user_id == user_id,
+            Movement.kind == "despesa",
+            Movement.occurred_on >= month_start,
+            Movement.occurred_on <= current,
+        )
+        .group_by(category_label)
+        .order_by(func.sum(Movement.amount).desc(), category_label)
+    ).all()
+    return [(str(label), money_total(amount)) for label, amount in rows]
+
+
+def simulate_investment(
+    initial_amount: Decimal,
+    monthly_contribution: Decimal,
+    interest_rate_percent: Decimal,
+    rate_period: str,
+    months: int,
+) -> dict[str, Decimal | list[int] | list[Decimal]]:
+    if not Decimal("0") <= initial_amount <= MAX_SIMULATION_AMOUNT:
+        raise ValueError("Valor inicial fora do intervalo permitido.")
+    if not Decimal("0") <= monthly_contribution <= MAX_SIMULATION_AMOUNT:
+        raise ValueError("Aporte mensal fora do intervalo permitido.")
+    if not Decimal("0") <= interest_rate_percent <= MAX_SIMULATION_RATE_PERCENT:
+        raise ValueError("A taxa deve estar entre 0% e 100%.")
+    if rate_period not in {"mensal", "anual"}:
+        raise ValueError("Período de taxa inválido.")
+    if not 1 <= months <= MAX_SIMULATION_MONTHS:
+        raise ValueError("O prazo deve ser de 1 a 600 meses.")
+
+    with localcontext() as context:
+        context.prec = 40
+        monthly_rate = interest_rate_percent / Decimal("100")
+        if rate_period == "anual":
+            monthly_rate = (
+                (Decimal("1") + monthly_rate) ** (Decimal("1") / Decimal("12"))
+                - Decimal("1")
+            )
+
+        balance = initial_amount
+        total_invested = initial_amount
+        months_elapsed = [0]
+        invested_series = [total_invested.quantize(MONEY_CENT)]
+        balance_series = [balance.quantize(MONEY_CENT)]
+
+        for month in range(1, months + 1):
+            balance = balance * (Decimal("1") + monthly_rate)
+            balance += monthly_contribution
+            total_invested += monthly_contribution
+            months_elapsed.append(month)
+            invested_series.append(total_invested.quantize(MONEY_CENT))
+            balance_series.append(
+                balance.quantize(MONEY_CENT, rounding=ROUND_HALF_UP)
+            )
+
+        final_value = balance.quantize(MONEY_CENT, rounding=ROUND_HALF_UP)
+        total_invested = total_invested.quantize(MONEY_CENT)
+
+        return {
+            "months": months_elapsed,
+            "invested_series": invested_series,
+            "balance_series": balance_series,
+            "total_invested": total_invested,
+            "interest_earned": final_value - total_invested,
+            "final_value": final_value,
+            "monthly_rate": monthly_rate,
+        }
 
 
 def classify_finances(income: Decimal, expenses: Decimal) -> str:
@@ -80,17 +219,19 @@ def get_month_history(user_id: int, today: date | None = None) -> dict:
     }
     rows = db.session.execute(
         select(Movement.occurred_on, Movement.kind, Movement.amount).where(
-            Movement.user_id == user_id, Movement.occurred_on >= months[0]
+            Movement.user_id == user_id,
+            Movement.occurred_on >= months[0],
+            Movement.occurred_on <= current,
         )
     ).all()
     for occurred_on, kind, amount in rows:
         month_total = totals.get((occurred_on.year, occurred_on.month))
         if month_total is not None and kind in month_total:
-            month_total[kind] += amount
+            month_total[kind] = money_total(month_total[kind] + money_total(amount))
     return {
         "labels": [item.strftime("%m/%Y") for item in months],
-        "income": [float(totals[(item.year, item.month)]["receita"]) for item in months],
-        "expenses": [float(totals[(item.year, item.month)]["despesa"]) for item in months],
+        "income": [money_total(totals[(item.year, item.month)]["receita"]) for item in months],
+        "expenses": [money_total(totals[(item.year, item.month)]["despesa"]) for item in months],
     }
 
 
