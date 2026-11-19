@@ -29,10 +29,10 @@ login_manager.login_message_category = "error"
 
 @login_manager.user_loader
 def load_user(user_id: str) -> User | None:
-  try:
-    return db.session.get(User, int(user_id))
-  except (TypeError, ValueError):
-    return None
+    try:
+        return db.session.get(User, int(user_id))
+    except (TypeError, ValueError):
+        return None
 
 
 def create_app(config_class: type[Config] = Config) -> Flask:
@@ -47,6 +47,17 @@ def create_app(config_class: type[Config] = Config) -> Flask:
     app.register_blueprint(admin_blueprint)
     app.register_blueprint(financeiro)
 
+    @app.template_filter("brl")
+    def format_brl(value) -> str:
+        if value is None:
+            return "R$ 0,00"
+        numeric = float(value)
+        sign = "-" if numeric < 0 else ""
+        formatted = (
+            f"{abs(numeric):,.2f}".replace(",", "X").replace(".", ",").replace("X", ".")
+        )
+        return f"{sign}R$ {formatted}"
+
     @app.get("/service-worker.js")
     def service_worker():
         response = send_from_directory(app.static_folder, "service-worker.js")
@@ -56,15 +67,15 @@ def create_app(config_class: type[Config] = Config) -> Flask:
 
     @app.context_processor
     def inject_logout_form():
-      from forms import LogoutForm
+        from forms import LogoutForm
 
-      return {"logout_form": LogoutForm()}
+        return {"logout_form": LogoutForm()}
 
     @app.get("/")
     def inicio():
-      if current_user.is_authenticated:
-        return redirect(url_for("painel"))
-      return redirect(url_for("auth.login"))
+        if current_user.is_authenticated:
+            return redirect(url_for("painel"))
+        return redirect(url_for("auth.login"))
 
     @app.get("/painel")
     @login_required
@@ -106,9 +117,11 @@ def create_app(config_class: type[Config] = Config) -> Flask:
         monthly_progress_class = (
             "goal-progress-over"
             if monthly_percent > 100
-            else "goal-progress-attention"
-            if monthly_percent >= 80
-            else "goal-progress-normal"
+            else (
+                "goal-progress-attention"
+                if monthly_percent >= 80
+                else "goal-progress-normal"
+            )
         )
         monthly_remaining = (
             monthly_limit - monthly_spent if monthly_limit is not None else None
@@ -155,7 +168,10 @@ def create_app(config_class: type[Config] = Config) -> Flask:
             return "Conexão com MySQL realizada com sucesso!"
         except SQLAlchemyError:
             app.logger.exception("Não foi possível testar a conexão com MySQL")
-            return "Não foi possível conectar ao banco. Confira o serviço e o arquivo .env.", 503
+            return (
+                "Não foi possível conectar ao banco. Confira o serviço e o arquivo .env.",
+                503,
+            )
 
     @app.cli.command("init-db")
     def init_db():
@@ -178,11 +194,26 @@ def create_app(config_class: type[Config] = Config) -> Flask:
             if exists is None:
                 db.session.add(Category(name=name, kind=kind))
         default_tips = [
-            ("Pague-se primeiro", "Defina um valor possível para guardar assim que receber, mesmo que comece pequeno."),
-            ("Revise os gastos recorrentes", "Confira assinaturas, tarifas e serviços pouco usados antes da próxima cobrança."),
-            ("Planeje compras maiores", "Compare preços e espere um período antes de decidir por uma compra não essencial."),
-            ("Monte sua reserva aos poucos", "Uma reserva pode começar com depósitos regulares e crescer conforme sua realidade."),
-            ("Organize as contas por prioridade", "Separe despesas essenciais, compromissos e gastos flexíveis para enxergar escolhas."),
+            (
+                "Pague-se primeiro",
+                "Defina um valor possível para guardar assim que receber, mesmo que comece pequeno.",
+            ),
+            (
+                "Revise os gastos recorrentes",
+                "Confira assinaturas, tarifas e serviços pouco usados antes da próxima cobrança.",
+            ),
+            (
+                "Planeje compras maiores",
+                "Compare preços e espere um período antes de decidir por uma compra não essencial.",
+            ),
+            (
+                "Monte sua reserva aos poucos",
+                "Uma reserva pode começar com depósitos regulares e crescer conforme sua realidade.",
+            ),
+            (
+                "Organize as contas por prioridade",
+                "Separe despesas essenciais, compromissos e gastos flexíveis para enxergar escolhas.",
+            ),
         ]
         for title, content in default_tips:
             exists = db.session.scalar(select(Tip).where(Tip.title == title))
