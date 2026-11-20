@@ -316,3 +316,6 @@ Esse comando não cria senhas nem recebe credenciais; ele altera o papel de uma 
 - Admin recebe `403`: confirme o papel com `promote-admin`, depois saia e entre novamente.
 - `/dicas` está vazio: execute `init-db` para inserir o conteúdo educativo inicial.
 - Gráficos vazios: verifique se existem movimentações e se o navegador consegue carregar Chart.js pela CDN.
+
+
+[![Architecture diagram of victoazam/sapoupei](https://gitdiagram.com/victoazam/sapoupei/diagram.png)](https://gitdiagram.com/victoazam/sapoupei?utm_source=readme&utm_medium=picture)
