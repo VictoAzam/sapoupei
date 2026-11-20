@@ -1,6 +1,6 @@
 import csv
 import io
-from datetime import date
+from datetime import date, datetime
 from decimal import Decimal
 from functools import wraps
 
@@ -183,6 +183,17 @@ def _build_report() -> dict:
     }
 
 
+def _fmt_br(value, decimals: int = 2) -> str:
+    return f"{float(value):.{decimals}f}".replace(".", ",")
+
+
+def _safe_csv_text(value) -> str:
+    text = str(value)
+    if text and text[0] in ("=", "+", "-", "@"):
+        return f"'{text}"
+    return text
+
+
 @admin.get("/")
 @admin_required
 def dashboard():
@@ -194,26 +205,36 @@ def dashboard():
 def export_report():
     report = _build_report()
     output = io.StringIO()
-    writer = csv.writer(output)
-    writer.writerow(["Relatório agregado", "Grupo", "Valor"])
-    writer.writerow(["Usuários cadastrados", "Total", report["total_users"]])
-    writer.writerow(["Receita média por usuário", "Todos", f'{report["avg_income"]:.2f}'])
-    writer.writerow(["Despesa média por usuário", "Todos", f'{report["avg_expense"]:.2f}'])
-    writer.writerow(["Média mensal de despesas", "Últimos seis meses", f'{report["avg_monthly_expense"]:.2f}'])
-    writer.writerow(["Usuários com saldo positivo", "Percentual", f'{report["saving_percent"]:.1f}%'])
-    for age_range, count in report["age_rows"]:
-        writer.writerow(["Usuários por faixa etária", age_range, count])
-    for age_range, average_expense in report["age_expense_rows"]:
-        writer.writerow(["Despesa média por faixa etária", age_range, f"{average_expense:.2f}"])
-    for category, amount, _count in report["category_rows"]:
-        writer.writerow(["Despesas por categoria", category, f"{amount:.2f}"])
-    for category, count in report["category_frequency_rows"]:
-        writer.writerow(["Lançamentos por categoria", category, count])
-    for profile_type, count in report["profile_rows"]:
-        writer.writerow(["Perfis financeiros", profile_type, count])
+    writer = csv.writer(output, delimiter=";")
+
+    # Cabeçalho do relatório
+    writer.writerow(["DESPESAS POR CATEGORIA (ACUMULADO)"])
+    writer.writerow(["Categoria", "Total de despesas (R$)", "Lançamentos"])
+    if report["category_rows"]:
+        for category, amount, count in report["category_rows"]:
+            writer.writerow([_safe_csv_text(category), _fmt_br(amount or 0), count])
+    else:
+        writer.writerow(["Sem dados registrados"])
+    writer.writerow([])
+
+    # 4. Perfis financeiros
+    writer.writerow(["PERFIS FINANCEIROS (ÚLTIMOS 30 DIAS)"])
+    writer.writerow(["Perfil financeiro", "Usuários"])
+    if report["profile_rows"]:
+        for profile_type, count in report["profile_rows"]:
+            writer.writerow([_safe_csv_text(profile_type), count])
+    else:
+        writer.writerow(["Sem dados registrados"])
+    writer.writerow([])
+
+    # 5. Evolução mensal (receita, despesa e saldo na mesma linha)
+    writer.writerow(["EVOLUÇÃO MENSAL (ÚLTIMOS 6 MESES)"])
+    writer.writerow(["Mês", "Receitas (R$)", "Despesas (R$)", "Saldo (R$)"])
     for month, totals in report["monthly_rows"]:
-        writer.writerow(["Receitas mensais", month, f'{totals["receita"]:.2f}'])
-        writer.writerow(["Despesas mensais", month, f'{totals["despesa"]:.2f}'])
+        receita = totals["receita"]
+        despesa = totals["despesa"]
+        saldo = receita - despesa
+        writer.writerow([month, _fmt_br(receita), _fmt_br(despesa), _fmt_br(saldo)])
 
     response = Response("\ufeff" + output.getvalue(), mimetype="text/csv; charset=utf-8")
     response.headers["Content-Disposition"] = "attachment; filename=relatorio-financeiro.csv"
